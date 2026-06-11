@@ -1,0 +1,10 @@
+{
+  "name": "geostop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PoC de portal de validación por geolocalización",
+  "scripts": {
+    "dev": "npx serve . -p 3000",
+    "start": "npm run dev"
+  }
+}

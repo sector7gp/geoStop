@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeoStop | Validación de acceso</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="card">
+        <header class="card-header">
+          <span class="eyebrow">PoC GeoStop</span>
+          <h1>Validación por geolocalización</h1>
+          <p class="lead">
+            Para acceder al sitio principal debes estar dentro de un radio de
+            <strong id="radius-label">300 m</strong> del punto autorizado.
+          </p>
+        </header>
+
+        <div class="card-body">
+          <div>
+            <div id="status-box" class="status status-idle">
+              <div class="status-icon" id="status-icon">📍</div>
+              <div>
+                <p class="status-title" id="status-title">Listo para verificar</p>
+                <p class="status-text" id="status-text">
+                  Pulsa el botón para solicitar tu ubicación. Solo se usa en este
+                  navegador y no se envía a ningún servidor en esta PoC.
+                </p>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="verify-btn" class="btn-primary" type="button">
+                Verificar ubicación
+              </button>
+              <button id="retry-btn" class="btn-secondary hidden" type="button">
+                Reintentar
+              </button>
+              <a id="enter-btn" class="button btn-primary hidden" href="/app/">
+                Entrar al sitio
+              </a>
+            </div>
+          </div>
+
+          <aside>
+            <div class="panel">
+              <h2>Zona autorizada</h2>
+              <ul class="meta-list">
+                <li>
+                  <span>Punto</span>
+                  <span id="target-label">—</span>
+                </li>
+                <li>
+                  <span>Coordenadas</span>
+                  <span id="target-coords">—</span>
+                </li>
+                <li>
+                  <span>Radio permitido</span>
+                  <span id="target-radius">—</span>
+                </li>
+                <li>
+                  <span>Tu distancia</span>
+                  <span id="user-distance">—</span>
+                </li>
+              </ul>
+            </div>
+
+            <div id="map" aria-label="Mapa de la zona autorizada"></div>
+            <p class="map-legend">
+              Círculo azul: zona permitida. Marcador: punto de referencia.
+            </p>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script type="module" src="/js/gate.js"></script>
+  </body>
+</html>
