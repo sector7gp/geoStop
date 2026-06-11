@@ -16,6 +16,7 @@ const verifyBtn = document.getElementById("verify-btn");
 const retryBtn = document.getElementById("retry-btn");
 const enterBtn = document.getElementById("enter-btn");
 const targetForm = document.getElementById("target-form");
+const applyBtn = document.getElementById("apply-btn");
 const formError = document.getElementById("form-error");
 const inputLabel = document.getElementById("input-label");
 const inputLat = document.getElementById("input-lat");
@@ -63,27 +64,12 @@ function showFormError(message) {
 }
 
 function parseTargetFromForm() {
-  const lat = Number(inputLat.value);
-  const lng = Number(inputLng.value);
-  const radiusMeters = Number(inputRadius.value);
-  const label = inputLabel.value.trim() || "Punto personalizado";
-
-  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
-    throw new Error("La latitud debe estar entre -90 y 90.");
-  }
-
-  if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
-    throw new Error("La longitud debe estar entre -180 y 180.");
-  }
-
-  if (!Number.isFinite(radiusMeters) || radiusMeters <= 0) {
-    throw new Error("El radio debe ser un número mayor que 0.");
-  }
-
-  return {
-    target: { lat, lng, label },
-    radiusMeters,
-  };
+  return parseTargetValues({
+    lat: inputLat.value,
+    lng: inputLng.value,
+    radiusMeters: inputRadius.value,
+    label: inputLabel.value,
+  });
 }
 
 function saveTargetToStorage(target, radiusMeters) {
@@ -114,6 +100,56 @@ function loadTargetFromStorage() {
   }
 }
 
+function parseTargetValues({ lat, lng, radiusMeters, label }) {
+  const parsedLat = Number(lat);
+  const parsedLng = Number(lng);
+  const parsedRadius = radiusMeters != null ? Number(radiusMeters) : GEO_CONFIG.radiusMeters;
+  const parsedLabel = String(label ?? "").trim() || "Punto personalizado";
+
+  if (!Number.isFinite(parsedLat) || parsedLat < -90 || parsedLat > 90) {
+    throw new Error("La latitud debe estar entre -90 y 90.");
+  }
+
+  if (!Number.isFinite(parsedLng) || parsedLng < -180 || parsedLng > 180) {
+    throw new Error("La longitud debe estar entre -180 y 180.");
+  }
+
+  if (!Number.isFinite(parsedRadius) || parsedRadius <= 0) {
+    throw new Error("El radio debe ser un número mayor que 0.");
+  }
+
+  return {
+    target: { lat: parsedLat, lng: parsedLng, label: parsedLabel },
+    radiusMeters: parsedRadius,
+  };
+}
+
+function loadTargetFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const lat = params.get("lat");
+  const lng = params.get("lng");
+
+  if (lat == null || lng == null || lat === "" || lng === "") {
+    return null;
+  }
+
+  try {
+    return parseTargetValues({
+      lat,
+      lng,
+      radiusMeters: params.get("radius"),
+      label: params.get("label"),
+    });
+  } catch {
+    return null;
+  }
+}
+
+function clearUrlParams() {
+  if (!window.location.search) return;
+  window.history.replaceState({}, "", window.location.pathname);
+}
+
 function fillForm(target, radiusMeters) {
   inputLabel.value = target.label || "";
   inputLat.value = String(target.lat);
@@ -129,13 +165,15 @@ function renderActiveTarget() {
 }
 
 function updateMapView() {
-  if (!map) return;
+  if (!map || !marker || !circle) return;
 
   const center = [activeTarget.lat, activeTarget.lng];
-  map.setView(center, 16);
-  marker.setLatLng(center).bindPopup(activeTarget.label);
+  marker.setLatLng(center);
+  marker.bindPopup(activeTarget.label);
   circle.setLatLng(center);
   circle.setRadius(activeRadius);
+  map.setView(center, map.getZoom() || 16, { animate: false });
+  map.invalidateSize();
 }
 
 function applyTargetFromForm({ persist = true } = {}) {
@@ -256,9 +294,16 @@ async function verifyLocation() {
 }
 
 function init() {
+  const fromUrl = loadTargetFromUrl();
   const saved = loadTargetFromStorage();
 
-  if (saved) {
+  if (fromUrl) {
+    activeTarget = fromUrl.target;
+    activeRadius = fromUrl.radiusMeters;
+    fillForm(activeTarget, activeRadius);
+    saveTargetToStorage(activeTarget, activeRadius);
+    clearUrlParams();
+  } else if (saved) {
     activeTarget = saved.target;
     activeRadius = saved.radiusMeters;
     fillForm(activeTarget, activeRadius);
@@ -268,10 +313,9 @@ function init() {
 
   renderActiveTarget();
   initMap();
+  updateMapView();
 
-  targetForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-
+  const handleApply = () => {
     try {
       applyTargetFromForm();
       setStatus(
@@ -284,6 +328,12 @@ function init() {
     } catch (error) {
       showFormError(error.message);
     }
+  };
+
+  applyBtn.addEventListener("click", handleApply);
+  targetForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    handleApply();
   });
 
   if (hasValidAccess()) {
