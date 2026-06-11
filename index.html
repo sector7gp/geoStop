@@ -10,7 +10,7 @@
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />
-    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
     <main class="layout">
@@ -111,7 +111,7 @@
               <button id="retry-btn" class="btn-secondary hidden" type="button">
                 Reintentar
               </button>
-              <a id="enter-btn" class="button btn-primary hidden" href="/app/">
+              <a id="enter-btn" class="button btn-primary hidden" href="app/">
                 Entrar al sitio
               </a>
             </div>
@@ -154,6 +154,12 @@
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
-    <script type="module" src="/js/gate.js"></script>
+    <script>
+      document.getElementById("target-form")?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        window.geoStopApplyFromForm?.();
+      });
+    </script>
+    <script type="module" src="js/gate.js"></script>
   </body>
 </html>

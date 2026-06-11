@@ -22,9 +22,9 @@ const inputLabel = document.getElementById("input-label");
 const inputLat = document.getElementById("input-lat");
 const inputLng = document.getElementById("input-lng");
 const inputRadius = document.getElementById("input-radius");
-const targetLabel = document.getElementById("target-label");
+const targetLabelEl = document.getElementById("target-label");
 const targetCoords = document.getElementById("target-coords");
-const targetRadius = document.getElementById("target-radius");
+const targetRadiusEl = document.getElementById("target-radius");
 const userDistance = document.getElementById("user-distance");
 const radiusLabel = document.getElementById("radius-label");
 
@@ -33,6 +33,7 @@ let marker;
 let circle;
 let activeTarget = { ...GEO_CONFIG.target };
 let activeRadius = GEO_CONFIG.radiusMeters;
+let syncTimer;
 
 function setStatus(type, icon, title, text) {
   statusBox.className = `status status-${type}`;
@@ -61,6 +62,33 @@ function showFormError(message) {
 
   formError.textContent = message;
   formError.classList.remove("hidden");
+}
+
+function parseTargetValues({ lat, lng, radiusMeters, label }) {
+  const parsedLat = Number(String(lat).trim().replace(",", "."));
+  const parsedLng = Number(String(lng).trim().replace(",", "."));
+  const parsedRadius =
+    radiusMeters != null && radiusMeters !== ""
+      ? Number(String(radiusMeters).trim())
+      : GEO_CONFIG.radiusMeters;
+  const parsedLabel = String(label ?? "").trim() || "Punto personalizado";
+
+  if (!Number.isFinite(parsedLat) || parsedLat < -90 || parsedLat > 90) {
+    throw new Error("La latitud debe estar entre -90 y 90.");
+  }
+
+  if (!Number.isFinite(parsedLng) || parsedLng < -180 || parsedLng > 180) {
+    throw new Error("La longitud debe estar entre -180 y 180.");
+  }
+
+  if (!Number.isFinite(parsedRadius) || parsedRadius <= 0) {
+    throw new Error("El radio debe ser un número mayor que 0.");
+  }
+
+  return {
+    target: { lat: parsedLat, lng: parsedLng, label: parsedLabel },
+    radiusMeters: parsedRadius,
+  };
 }
 
 function parseTargetFromForm() {
@@ -100,30 +128,6 @@ function loadTargetFromStorage() {
   }
 }
 
-function parseTargetValues({ lat, lng, radiusMeters, label }) {
-  const parsedLat = Number(lat);
-  const parsedLng = Number(lng);
-  const parsedRadius = radiusMeters != null ? Number(radiusMeters) : GEO_CONFIG.radiusMeters;
-  const parsedLabel = String(label ?? "").trim() || "Punto personalizado";
-
-  if (!Number.isFinite(parsedLat) || parsedLat < -90 || parsedLat > 90) {
-    throw new Error("La latitud debe estar entre -90 y 90.");
-  }
-
-  if (!Number.isFinite(parsedLng) || parsedLng < -180 || parsedLng > 180) {
-    throw new Error("La longitud debe estar entre -180 y 180.");
-  }
-
-  if (!Number.isFinite(parsedRadius) || parsedRadius <= 0) {
-    throw new Error("El radio debe ser un número mayor que 0.");
-  }
-
-  return {
-    target: { lat: parsedLat, lng: parsedLng, label: parsedLabel },
-    radiusMeters: parsedRadius,
-  };
-}
-
 function loadTargetFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const lat = params.get("lat");
@@ -158,38 +162,77 @@ function fillForm(target, radiusMeters) {
 }
 
 function renderActiveTarget() {
-  targetLabel.textContent = activeTarget.label;
+  targetLabelEl.textContent = activeTarget.label;
   targetCoords.textContent = `${activeTarget.lat.toFixed(5)}, ${activeTarget.lng.toFixed(5)}`;
-  targetRadius.textContent = formatDistance(activeRadius);
+  targetRadiusEl.textContent = formatDistance(activeRadius);
   radiusLabel.textContent = formatDistance(activeRadius);
 }
 
-function updateMapView() {
-  if (!map || !marker || !circle) return;
+function replaceMapLayers() {
+  if (!map) return;
+
+  if (marker) {
+    map.removeLayer(marker);
+    marker = null;
+  }
+
+  if (circle) {
+    map.removeLayer(circle);
+    circle = null;
+  }
 
   const center = [activeTarget.lat, activeTarget.lng];
-  marker.setLatLng(center);
-  marker.bindPopup(activeTarget.label);
-  circle.setLatLng(center);
-  circle.setRadius(activeRadius);
-  map.setView(center, map.getZoom() || 16, { animate: false });
-  map.invalidateSize();
+  marker = L.marker(center).addTo(map).bindPopup(activeTarget.label);
+  circle = L.circle(center, {
+    radius: activeRadius,
+    color: "#22d3ee",
+    fillColor: "#22d3ee",
+    fillOpacity: 0.15,
+    weight: 2,
+  }).addTo(map);
+
+  map.fitBounds(circle.getBounds(), { padding: [24, 24], maxZoom: 17 });
 }
 
-function applyTargetFromForm({ persist = true } = {}) {
-  const { target, radiusMeters } = parseTargetFromForm();
+function updateMapView() {
+  if (!map) return;
+  replaceMapLayers();
+  window.requestAnimationFrame(() => map.invalidateSize());
+}
 
+function setActiveTarget(target, radiusMeters, { updateMap = true } = {}) {
   activeTarget = target;
   activeRadius = radiusMeters;
-  showFormError("");
   renderActiveTarget();
-  updateMapView();
+  if (updateMap) {
+    updateMapView();
+  }
+}
+
+function applyTargetFromForm({ persist = true, updateMap = true } = {}) {
+  const { target, radiusMeters } = parseTargetFromForm();
+
+  setActiveTarget(target, radiusMeters, { updateMap });
+  showFormError("");
 
   if (persist) {
     saveTargetToStorage(target, radiusMeters);
   }
 
   return { target, radiusMeters };
+}
+
+function scheduleLiveSync() {
+  window.clearTimeout(syncTimer);
+  syncTimer = window.setTimeout(() => {
+    try {
+      const { target, radiusMeters } = parseTargetFromForm();
+      setActiveTarget(target, radiusMeters);
+      showFormError("");
+    } catch (error) {
+      showFormError(error.message);
+    }
+  }, 350);
 }
 
 function initMap() {
@@ -199,19 +242,11 @@ function initMap() {
   );
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
   }).addTo(map);
 
-  marker = L.marker([activeTarget.lat, activeTarget.lng]).addTo(map);
-  circle = L.circle([activeTarget.lat, activeTarget.lng], {
-    radius: activeRadius,
-    color: "#22d3ee",
-    fillColor: "#22d3ee",
-    fillOpacity: 0.15,
-    weight: 2,
-  }).addTo(map);
-
-  marker.bindPopup(activeTarget.label);
+  replaceMapLayers();
 }
 
 function geoErrorMessage(error) {
@@ -293,6 +328,21 @@ async function verifyLocation() {
   }
 }
 
+function handleApply() {
+  try {
+    applyTargetFromForm();
+    setStatus(
+      "idle",
+      "📍",
+      "Punto actualizado",
+      "Las coordenadas se aplicaron al mapa. Ya puedes verificar tu ubicación."
+    );
+    showActions({ verify: true, retry: false, enter: false });
+  } catch (error) {
+    showFormError(error.message);
+  }
+}
+
 function init() {
   const fromUrl = loadTargetFromUrl();
   const saved = loadTargetFromStorage();
@@ -309,32 +359,25 @@ function init() {
     fillForm(activeTarget, activeRadius);
   } else {
     fillForm(GEO_CONFIG.target, GEO_CONFIG.radiusMeters);
+    activeTarget = { ...GEO_CONFIG.target };
+    activeRadius = GEO_CONFIG.radiusMeters;
   }
 
   renderActiveTarget();
   initMap();
-  updateMapView();
-
-  const handleApply = () => {
-    try {
-      applyTargetFromForm();
-      setStatus(
-        "idle",
-        "📍",
-        "Punto actualizado",
-        "Las coordenadas se aplicaron al mapa. Ya puedes verificar tu ubicación."
-      );
-      showActions({ verify: true, retry: false, enter: false });
-    } catch (error) {
-      showFormError(error.message);
-    }
-  };
 
   applyBtn.addEventListener("click", handleApply);
   targetForm.addEventListener("submit", (event) => {
     event.preventDefault();
     handleApply();
   });
+
+  [inputLat, inputLng, inputRadius, inputLabel].forEach((input) => {
+    input.addEventListener("input", scheduleLiveSync);
+    input.addEventListener("change", scheduleLiveSync);
+  });
+
+  window.geoStopApplyFromForm = handleApply;
 
   if (hasValidAccess()) {
     setStatus(
@@ -344,11 +387,20 @@ function init() {
       "Ya tienes acceso validado en esta pestaña. Puedes entrar al sitio principal."
     );
     showActions({ verify: false, retry: true, enter: true });
-    return;
+  } else {
+    verifyBtn.addEventListener("click", verifyLocation);
+    retryBtn.addEventListener("click", verifyLocation);
   }
-
-  verifyBtn.addEventListener("click", verifyLocation);
-  retryBtn.addEventListener("click", verifyLocation);
 }
 
-init();
+try {
+  init();
+} catch (error) {
+  console.error("[GeoStop]", error);
+  setStatus(
+    "error",
+    "⚠️",
+    "Error al iniciar",
+    "No se pudo cargar el mapa. Recarga la página o revisa la consola del navegador."
+  );
+}
