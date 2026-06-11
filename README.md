@@ -26,21 +26,15 @@ Abre [http://localhost:3000](http://localhost:3000).
 
 ## Configuración
 
-Edita `js/config.js`:
+Desde la **landing** puedes definir el punto de validación en el formulario:
 
-```js
-export const GEO_CONFIG = {
-  target: {
-    lat: 40.4155,
-    lng: -3.7074,
-    label: "Plaza Mayor, Madrid",
-  },
-  radiusMeters: 300,
-  sessionMaxAgeMs: 30 * 60 * 1000,
-};
-```
+- Nombre del punto
+- Latitud y longitud
+- Radio en metros
 
-Cambia `lat`, `lng` y `label` al punto que quieras validar.
+Los valores se guardan en `localStorage` del navegador para la próxima visita.
+
+También puedes cambiar los valores por defecto en `js/config.js` (se usan la primera vez, antes de guardar coordenadas personalizadas).
 
 ## Estructura
 

@@ -1,10 +1,10 @@
 import { GEO_CONFIG } from "./config.js";
 
-export function grantAccess() {
+export function grantAccess(targetLabel = GEO_CONFIG.target.label) {
   const payload = {
     granted: true,
     at: Date.now(),
-    target: GEO_CONFIG.target.label,
+    target: targetLabel,
   };
   sessionStorage.setItem(GEO_CONFIG.sessionKey, JSON.stringify(payload));
 }

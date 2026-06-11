@@ -26,6 +26,73 @@
 
         <div class="card-body">
           <div>
+            <form id="target-form" class="panel target-form">
+              <h2>Punto de validación</h2>
+              <p class="form-help">
+                Define las coordenadas contra las que se comprobará tu ubicación.
+              </p>
+
+              <label class="field">
+                <span>Nombre del punto</span>
+                <input
+                  id="input-label"
+                  name="label"
+                  type="text"
+                  placeholder="Ej. Oficina central"
+                  autocomplete="off"
+                />
+              </label>
+
+              <div class="field-row">
+                <label class="field">
+                  <span>Latitud</span>
+                  <input
+                    id="input-lat"
+                    name="lat"
+                    type="number"
+                    step="any"
+                    min="-90"
+                    max="90"
+                    placeholder="40.4155"
+                    required
+                  />
+                </label>
+                <label class="field">
+                  <span>Longitud</span>
+                  <input
+                    id="input-lng"
+                    name="lng"
+                    type="number"
+                    step="any"
+                    min="-180"
+                    max="180"
+                    placeholder="-3.7074"
+                    required
+                  />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Radio (metros)</span>
+                <input
+                  id="input-radius"
+                  name="radius"
+                  type="number"
+                  min="1"
+                  max="50000"
+                  step="1"
+                  value="300"
+                  required
+                />
+              </label>
+
+              <p id="form-error" class="form-error hidden" role="alert"></p>
+
+              <button id="apply-btn" class="btn-secondary" type="submit">
+                Aplicar punto
+              </button>
+            </form>
+
             <div id="status-box" class="status status-idle">
               <div class="status-icon" id="status-icon">📍</div>
               <div>
