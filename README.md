@@ -87,6 +87,16 @@ geoStop/
 - Navegador con API de Geolocation
 - **HTTPS o localhost** para geolocalización en producción
 
+## Seguridad
+
+El servidor **no expone** el directorio del proyecto completo. Solo sirve:
+
+- `/` → `index.html`
+- `/css/*` → estilos
+- `/js/*` → scripts del front
+
+Rutas bloqueadas (404): `.git`, `.env`, `server/`, `node_modules/`, `package.json`, etc.
+
 ## Limitaciones (PoC)
 
 - Las coordenadas las envía el cliente; un usuario técnico podría falsificarlas.

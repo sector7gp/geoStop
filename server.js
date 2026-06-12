@@ -12,6 +12,7 @@ import {
   createAccessToken,
   renderAccessRedirectPage,
 } from "./server/access.js";
+import { registerPublicRoutes } from "./server/static.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -45,16 +46,8 @@ try {
   process.exit(1);
 }
 
+app.disable("x-powered-by");
 app.use(express.json());
-app.use(
-  express.static(__dirname, {
-    setHeaders(res, filePath) {
-      if (/\.(html?|js|css)$/i.test(filePath)) {
-        res.setHeader("Cache-Control", "no-store");
-      }
-    },
-  })
-);
 
 app.get("/api/zones", (_req, res) => {
   res.json({ zones: zonesForClient(zones) });
@@ -113,6 +106,8 @@ app.get("/access/:token", (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   return res.type("html").send(renderAccessRedirectPage(zone));
 });
+
+registerPublicRoutes(app, __dirname);
 
 app.listen(port, "0.0.0.0", () => {
   console.log(`[GeoStop] Puerto ${port} (desde .env)`);
