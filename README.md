@@ -40,6 +40,8 @@ Podés agregar más zonas con `ZONE_3_*`, `ZONE_4_*`, etc.
 | Variable | Descripción |
 |----------|-------------|
 | `PORT` | Puerto del servidor (default: 3000) |
+| `GEOSTOP_POST_PARAM` | Nombre del campo POST al redirigir (default: `geostop`) |
+| `GEOSTOP_POST_VALUE` | Valor del campo POST al redirigir (default: `true`) |
 | `ZONE_N_NAME` | Nombre visible en el mapa (opcional) |
 | `ZONE_N_LAT` | Latitud del punto |
 | `ZONE_N_LNG` | Longitud del punto |
@@ -60,7 +62,9 @@ Abre `http://localhost:PORT` (según el valor de `PORT` en tu `.env`).
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | `GET` | `/api/zones` | Lista zonas (sin URLs de destino) |
-| `POST` | `/api/validate` | Body: `{ "lat": number, "lng": number }` → `{ allowed, redirectUrl?, zone? }` |
+| `POST` | `/api/validate` | Body: `{ "lat": number, "lng": number }` → `{ allowed, redirectUrl?, postFields?, zone? }` |
+
+Si `allowed` es `true`, el front redirige al `redirectUrl` con un **formulario POST** enviando `geostop=true` (o lo definido en `.env`).
 
 ## Estructura
 

@@ -7,6 +7,7 @@ import {
   loadZonesFromEnv,
   zonesForClient,
 } from "./server/zones.js";
+import { getAccessPostFields } from "./server/post-fields.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -83,6 +84,7 @@ app.post("/api/validate", (req, res) => {
       name: match.zone.name,
     },
     redirectUrl: match.zone.url,
+    postFields: getAccessPostFields(),
     distance: match.distance,
   });
 });
