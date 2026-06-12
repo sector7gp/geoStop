@@ -17,7 +17,7 @@ Copiá el ejemplo y editá las zonas:
 cp .env.example .env
 ```
 
-Formato por zona:
+Formato en `.env`:
 
 ```env
 PORT=3000
@@ -39,6 +39,7 @@ Podés agregar más zonas con `ZONE_3_*`, `ZONE_4_*`, etc.
 
 | Variable | Descripción |
 |----------|-------------|
+| `PORT` | Puerto del servidor (default: 3000) |
 | `ZONE_N_NAME` | Nombre visible en el mapa (opcional) |
 | `ZONE_N_LAT` | Latitud del punto |
 | `ZONE_N_LNG` | Longitud del punto |
@@ -52,7 +53,7 @@ npm install
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000).
+Abre `http://localhost:PORT` (según el valor de `PORT` en tu `.env`).
 
 ## API
 

@@ -1,4 +1,4 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -9,15 +9,34 @@ import {
 } from "./server/zones.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+dotenv.config({ path: path.join(__dirname, ".env") });
+
+function resolvePort() {
+  const raw = process.env.PORT;
+
+  if (raw == null || String(raw).trim() === "") {
+    return 3000;
+  }
+
+  const port = Number(raw);
+
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error("PORT inválido en .env (usa un entero entre 1 y 65535)");
+  }
+
+  return port;
+}
+
 const app = express();
-const port = Number(process.env.PORT || 3000);
+const port = resolvePort();
 
 let zones;
 
 try {
   zones = loadZonesFromEnv();
 } catch (error) {
-  console.error(`[GeoStop] Error al cargar .env: ${error.message}`);
+  console.error(`[GeoStop] Error al cargar configuración: ${error.message}`);
   process.exit(1);
 }
 
@@ -60,7 +79,8 @@ app.post("/api/validate", (req, res) => {
   });
 });
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
+  console.log(`[GeoStop] Puerto ${port} (desde .env)`);
   console.log(`[GeoStop] http://localhost:${port}`);
   console.log(`[GeoStop] ${zones.length} zona(s) cargada(s) desde .env`);
 });
