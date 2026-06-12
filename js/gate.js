@@ -112,24 +112,6 @@ function geoErrorMessage(error) {
   }
 }
 
-function redirectWithPost(url, fields) {
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = url;
-  form.style.display = "none";
-
-  Object.entries(fields).forEach(([name, value]) => {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = name;
-    input.value = String(value);
-    form.appendChild(input);
-  });
-
-  document.body.appendChild(form);
-  form.submit();
-}
-
 async function verifyLocation() {
   setLoading(true);
   showActions({ verify: false, retry: false });
@@ -158,18 +140,14 @@ async function verifyLocation() {
     const result = await response.json();
 
     if (result.allowed) {
-      const postFields = result.postFields ?? { geostop: "true" };
-
       setStatus(
         "success",
         "✅",
         "Acceso autorizado",
-        `Zona: ${result.zone.name}. Enviando acceso por POST a ${result.redirectUrl}…`
+        `Zona: ${result.zone.name}. Enviando POST a ${result.redirectUrl}…`
       );
       showActions({ verify: false, retry: false });
-      window.setTimeout(() => {
-        redirectWithPost(result.redirectUrl, postFields);
-      }, 800);
+      window.location.assign(result.redirectPath);
       return;
     }
 

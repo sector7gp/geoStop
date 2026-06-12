@@ -7,7 +7,11 @@ import {
   loadZonesFromEnv,
   zonesForClient,
 } from "./server/zones.js";
-import { getAccessPostFields } from "./server/post-fields.js";
+import {
+  consumeAccessToken,
+  createAccessToken,
+  renderAccessRedirectPage,
+} from "./server/access.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -77,16 +81,37 @@ app.post("/api/validate", (req, res) => {
     });
   }
 
+  const token = createAccessToken(match.zone.id);
+
   return res.json({
     allowed: true,
     zone: {
       id: match.zone.id,
       name: match.zone.name,
     },
+    redirectPath: `/access/${token}`,
     redirectUrl: match.zone.url,
-    postFields: getAccessPostFields(),
     distance: match.distance,
   });
+});
+
+app.get("/access/:token", (req, res) => {
+  const zoneId = consumeAccessToken(req.params.token);
+
+  if (!zoneId) {
+    return res
+      .status(403)
+      .send("Enlace de acceso inválido o expirado. Volvé a verificar tu ubicación.");
+  }
+
+  const zone = zones.find((entry) => entry.id === zoneId);
+
+  if (!zone) {
+    return res.status(404).send("Zona no encontrada.");
+  }
+
+  res.setHeader("Cache-Control", "no-store");
+  return res.type("html").send(renderAccessRedirectPage(zone));
 });
 
 app.listen(port, "0.0.0.0", () => {

@@ -64,7 +64,7 @@ Abre `http://localhost:PORT` (según el valor de `PORT` en tu `.env`).
 | `GET` | `/api/zones` | Lista zonas (sin URLs de destino) |
 | `POST` | `/api/validate` | Body: `{ "lat": number, "lng": number }` → `{ allowed, redirectUrl?, postFields?, zone? }` |
 
-Si `allowed` es `true`, el front redirige al `redirectUrl` con un **formulario POST** enviando `geostop=true` (o lo definido en `.env`).
+Si `allowed` es `true`, el navegador va a `/access/:token` y el servidor devuelve un **formulario HTML POST** idéntico al de prueba manual, con `geostop=true` hacia la URL de la zona.
 
 ## Estructura
 
