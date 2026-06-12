@@ -41,7 +41,15 @@ try {
 }
 
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(
+  express.static(__dirname, {
+    setHeaders(res, filePath) {
+      if (/\.(html?|js|css)$/i.test(filePath)) {
+        res.setHeader("Cache-Control", "no-store");
+      }
+    },
+  })
+);
 
 app.get("/api/zones", (_req, res) => {
   res.json({ zones: zonesForClient(zones) });
