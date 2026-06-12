@@ -1,10 +1,15 @@
 {
   "name": "geostop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
+  "type": "module",
   "description": "PoC de portal de validación por geolocalización",
   "scripts": {
-    "dev": "npx serve . -p 3000",
-    "start": "npm run dev"
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
   }
 }

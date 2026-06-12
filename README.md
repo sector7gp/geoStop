@@ -1,74 +1,93 @@
 # GeoStop — PoC de validación por geolocalización
 
-Portal de demostración que bloquea el acceso al sitio principal hasta confirmar que el usuario está dentro de un radio de **300 metros** alrededor de un punto definido.
+Portal que valida la ubicación del usuario contra **zonas definidas en `.env`** y redirige al sitio correspondiente si está dentro del radio permitido.
 
 ## Cómo funciona
 
-1. El usuario entra en la **landing** (`/`).
-2. Pulsa **Verificar ubicación** y el navegador solicita permiso de geolocalización.
-3. Se calcula la distancia con la fórmula de **Haversine**.
-4. Si la distancia es ≤ 300 m, se guarda una sesión en `sessionStorage` y se habilita el acceso a `/app/`.
-5. Si no, se muestra la distancia actual y el acceso queda denegado.
+1. El usuario entra en la landing y pulsa **Verificar ubicación**.
+2. El navegador obtiene su posición GPS.
+3. El servidor comprueba si está dentro de alguna zona (`ZONE_N_*` en `.env`).
+4. Si coincide, redirige a la URL configurada para esa zona (p. ej. `site1.com`, `site2.com`).
 
-## Requisitos
+## Configuración (`.env`)
 
-- Navegador moderno con API de Geolocation.
-- **HTTPS o localhost** (los navegadores exigen contexto seguro para geolocalización).
-- Permiso de ubicación concedido.
-
-## Arranque rápido
+Copiá el ejemplo y editá las zonas:
 
 ```bash
+cp .env.example .env
+```
+
+Formato por zona:
+
+```env
+PORT=3000
+
+ZONE_1_NAME=Buenos Aires
+ZONE_1_LAT=-34.6037
+ZONE_1_LNG=-58.3816
+ZONE_1_RADIUS=300
+ZONE_1_URL=https://site1.com
+
+ZONE_2_NAME=Madrid
+ZONE_2_LAT=40.4155
+ZONE_2_LNG=-3.7074
+ZONE_2_RADIUS=300
+ZONE_2_URL=https://site2.com
+```
+
+Podés agregar más zonas con `ZONE_3_*`, `ZONE_4_*`, etc.
+
+| Variable | Descripción |
+|----------|-------------|
+| `ZONE_N_NAME` | Nombre visible en el mapa (opcional) |
+| `ZONE_N_LAT` | Latitud del punto |
+| `ZONE_N_LNG` | Longitud del punto |
+| `ZONE_N_RADIUS` | Radio en metros (default: 300) |
+| `ZONE_N_URL` | URL de redirección si la validación es exitosa |
+
+## Arranque
+
+```bash
+npm install
 npm run dev
 ```
 
 Abre [http://localhost:3000](http://localhost:3000).
 
-## Configuración
+## API
 
-Desde la **landing** puedes definir el punto de validación en el formulario:
-
-- Nombre del punto
-- Latitud y longitud
-- Radio en metros
-
-Los valores se guardan en `localStorage` del navegador para la próxima visita.
-
-También puedes cambiar los valores por defecto en `js/config.js` (se usan la primera vez, antes de guardar coordenadas personalizadas).
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/api/zones` | Lista zonas (sin URLs de destino) |
+| `POST` | `/api/validate` | Body: `{ "lat": number, "lng": number }` → `{ allowed, redirectUrl?, zone? }` |
 
 ## Estructura
 
 ```
 geoStop/
-├── index.html          # Landing de validación
-├── app/index.html      # Sitio principal protegido
-├── css/styles.css
+├── .env                 # Configuración local (no se sube a git)
+├── .env.example         # Plantilla de zonas
+├── server.js            # Servidor Express
+├── server/zones.js      # Carga y validación de zonas
+├── index.html           # Landing
 ├── js/
-│   ├── config.js       # Punto y radio
-│   ├── geo.js          # Haversine + geolocalización
-│   ├── session.js      # Token de acceso en sesión
-│   ├── gate.js         # Lógica de la landing
-│   └── guard.js        # Protección del sitio principal
-└── package.json
+│   ├── gate.js          # UI + geolocalización + redirección
+│   └── geo.js           # Haversine
+└── css/styles.css
 ```
 
-## Limitaciones de esta PoC
+## Requisitos
 
-- La validación es **solo en cliente**: un usuario técnico puede saltarse la comprobación.
-- No hay backend ni tokens firmados.
-- La precisión depende del GPS/Wi‑Fi del dispositivo.
-- Para producción, conviene:
-  - Validar en servidor con coordenadas enviadas y rate limiting.
-  - Usar tokens firmados (JWT) con expiración corta.
-  - Combinar con otras señales (IP, QR, etc.) según el caso de uso.
+- Node.js 18+
+- Navegador con API de Geolocation
+- **HTTPS o localhost** para geolocalización en producción
+
+## Limitaciones (PoC)
+
+- Las coordenadas las envía el cliente; un usuario técnico podría falsificarlas.
+- Para producción conviene combinar con otras señales y rate limiting.
 
 ## Pruebas sin estar en el punto
 
-Para desarrollo puedes:
-
-1. Cambiar temporalmente las coordenadas en `config.js` a tu ubicación actual.
-2. Usar las herramientas de geolocalización simulada del navegador (DevTools → Sensors → Location).
-
-## Licencia
-
-PoC de demostración — uso libre.
+1. Cambiá temporalmente las coordenadas en `.env` a tu ubicación actual.
+2. O usá la simulación de ubicación del navegador (DevTools → Sensors).

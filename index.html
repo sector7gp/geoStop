@@ -19,87 +19,20 @@
           <span class="eyebrow">PoC GeoStop</span>
           <h1>Validación por geolocalización</h1>
           <p class="lead">
-            Para acceder al sitio principal debes estar dentro de un radio de
-            <strong id="radius-label">300 m</strong> del punto autorizado.
+            Verificamos tu ubicación contra las zonas configuradas en el servidor.
+            Si coincidís con alguna, te redirigimos al sitio correspondiente.
           </p>
         </header>
 
         <div class="card-body">
           <div>
-            <form id="target-form" class="panel target-form" novalidate>
-              <h2>Punto de validación</h2>
-              <p class="form-help">
-                Define las coordenadas contra las que se comprobará tu ubicación.
-              </p>
-
-              <label class="field">
-                <span>Nombre del punto</span>
-                <input
-                  id="input-label"
-                  name="label"
-                  type="text"
-                  placeholder="Ej. Oficina central"
-                  autocomplete="off"
-                />
-              </label>
-
-              <div class="field-row">
-                <label class="field">
-                  <span>Latitud</span>
-                  <input
-                    id="input-lat"
-                    name="lat"
-                    type="number"
-                    step="any"
-                    min="-90"
-                    max="90"
-                    placeholder="40.4155"
-                    required
-                  />
-                </label>
-                <label class="field">
-                  <span>Longitud</span>
-                  <input
-                    id="input-lng"
-                    name="lng"
-                    type="number"
-                    step="any"
-                    min="-180"
-                    max="180"
-                    placeholder="-3.7074"
-                    required
-                  />
-                </label>
-              </div>
-
-              <label class="field">
-                <span>Radio (metros)</span>
-                <input
-                  id="input-radius"
-                  name="radius"
-                  type="number"
-                  min="1"
-                  max="50000"
-                  step="1"
-                  value="300"
-                  required
-                />
-              </label>
-
-              <p id="form-error" class="form-error hidden" role="alert"></p>
-
-              <button id="apply-btn" class="btn-secondary" type="button">
-                Aplicar punto
-              </button>
-            </form>
-
             <div id="status-box" class="status status-idle">
               <div class="status-icon" id="status-icon">📍</div>
               <div>
                 <p class="status-title" id="status-title">Listo para verificar</p>
                 <p class="status-text" id="status-text">
-                  Pulsa el botón para solicitar tu ubicación. Solo se usa en este
-                  navegador y no se envía a ningún servidor en esta PoC.
+                  Pulsa el botón para solicitar tu ubicación y comprobar si estás
+                  dentro de alguna zona autorizada.
                 </p>
               </div>
             </div>
@@ -111,38 +44,20 @@
               <button id="retry-btn" class="btn-secondary hidden" type="button">
                 Reintentar
               </button>
-              <a id="enter-btn" class="button btn-primary hidden" href="app/">
-                Entrar al sitio
-              </a>
             </div>
           </div>
 
           <aside>
             <div class="panel">
-              <h2>Zona autorizada</h2>
-              <ul class="meta-list">
-                <li>
-                  <span>Punto</span>
-                  <span id="target-label">—</span>
-                </li>
-                <li>
-                  <span>Coordenadas</span>
-                  <span id="target-coords">—</span>
-                </li>
-                <li>
-                  <span>Radio permitido</span>
-                  <span id="target-radius">—</span>
-                </li>
-                <li>
-                  <span>Tu distancia</span>
-                  <span id="user-distance">—</span>
-                </li>
+              <h2>Zonas configuradas</h2>
+              <ul id="zones-list" class="zones-list">
+                <li>Cargando zonas…</li>
               </ul>
             </div>
 
-            <div id="map" aria-label="Mapa de la zona autorizada"></div>
+            <div id="map" aria-label="Mapa de zonas autorizadas"></div>
             <p class="map-legend">
-              Círculo azul: zona permitida. Marcador: punto de referencia.
+              Círculos: zonas permitidas. Marcadores: puntos de referencia.
             </p>
           </aside>
         </div>
@@ -154,12 +69,6 @@
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
-    <script>
-      document.getElementById("target-form")?.addEventListener("submit", (event) => {
-        event.preventDefault();
-        window.geoStopApplyFromForm?.();
-      });
-    </script>
     <script type="module" src="js/gate.js"></script>
   </body>
 </html>
